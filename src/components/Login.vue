@@ -1,7 +1,47 @@
 <script setup>
 import { ref } from 'vue'
 
+const emit = defineEmits(['login'])
+const email = ref('')
+const password = ref('')
 const passwordVisible = ref(false)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+const loginAuthToken = import.meta.env.VITE_LOGIN_AUTH_TOKEN
+
+async function submitLogin() {
+  errorMessage.value = ''
+  isSubmitting.value = true
+
+  const formData = new FormData()
+  formData.append('email', email.value)
+  formData.append('password', password.value)
+
+  try {
+    const headers = loginAuthToken ? { Authorization: `Bearer ${loginAuthToken}` } : {}
+    const response = await fetch(`${apiBaseUrl}/login`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    const responseBody = await response.json().catch(() => ({}))
+    const token = responseBody.token || responseBody.access_token || responseBody.data?.token || responseBody.data?.access_token
+
+    if (!response.ok || !token) {
+      throw new Error(responseBody.message || responseBody.error || 'Unable to sign in with those details.')
+    }
+
+    emit('login', token)
+  } catch (error) {
+    errorMessage.value = error instanceof TypeError
+      ? 'Unable to reach the login service. Please try again.'
+      : error.message
+  } finally {
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -20,10 +60,10 @@ const passwordVisible = ref(false)
         <p>Enter your details to continue to your workspace.</p>
       </div>
 
-      <form class="login-form" @submit.prevent>
+      <form class="login-form" @submit.prevent="submitLogin">
         <div class="field-group">
           <label for="email">Email address</label>
-          <input id="email" type="email" autocomplete="email" placeholder="you@company.com" required />
+          <input id="email" v-model.trim="email" type="email" autocomplete="email" placeholder="you@company.com" required />
         </div>
 
         <div class="field-group">
@@ -34,6 +74,7 @@ const passwordVisible = ref(false)
           <div class="password-input">
             <input
               id="password"
+              v-model="password"
               :type="passwordVisible ? 'text' : 'password'"
               autocomplete="current-password"
               placeholder="Enter your password"
@@ -57,7 +98,10 @@ const passwordVisible = ref(false)
           </div>
         </div>
 
-        <button class="submit-button" type="submit">Sign in <span aria-hidden="true">&rarr;</span></button>
+        <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
+        <button class="submit-button" type="submit" :disabled="isSubmitting">
+          {{ isSubmitting ? 'Signing in...' : 'Sign in' }} <span aria-hidden="true">&rarr;</span>
+        </button>
       </form>
 
       <p class="signup-prompt">New to Personal? <a href="#create-account">Create an account</a></p>
@@ -173,7 +217,9 @@ input:focus { border-color: #286b60; box-shadow: 0 0 0 3px rgba(40, 107, 96, 0.1
 
 .visibility-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .submit-button { display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 2px; padding: 16px 18px; background: #eebe68; color: #183f3a; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.submit-button:disabled { cursor: wait; opacity: 0.65; }
 .submit-button span { font-size: 20px; line-height: 0; }
+.form-error { margin-top: -8px; color: #a33d32; font-size: 13px; }
 .signup-prompt { margin-top: 30px; color: #697572; font-size: 13px; }
 .signup-prompt a { font-weight: 700; }
 
