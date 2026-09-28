@@ -25,6 +25,7 @@ export async function login(email, password) {
 
 export async function signup(name, email, password) {
   const formData = new FormData()
+  
   formData.append('name', name)
   formData.append('email', email)
   formData.append('password', password)

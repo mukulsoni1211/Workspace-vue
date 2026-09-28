@@ -1,8 +1,10 @@
 <script setup>
 import { ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import { signup } from '../services/authService'
+import { saveSession } from '../services/sessionService'
 
-const emit = defineEmits(['login'])
+const router = useRouter()
 
 const name = ref('')
 const email = ref('')
@@ -40,7 +42,8 @@ async function submitSignup() {
 
   try {
     const account = await signup(name.value.trim(), email.value.trim(), password.value)
-    emit('login', account)
+    saveSession(account)
+    await router.replace('/dashboard/todos')
 
   } catch (error) {
     errorMessage.value = error.response?.data?.message
@@ -98,7 +101,7 @@ async function submitSignup() {
         </button>
       </form>
 
-      <p class="login-prompt">Already have an account? <a href="#sign-in" @click.prevent="$emit('login')">Sign in</a></p>
+      <p class="login-prompt">Already have an account? <RouterLink to="/login">Sign in</RouterLink></p>
     </section>
   </main>
 </template>

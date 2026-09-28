@@ -1,4 +1,6 @@
 <script setup>
+import { RouterLink } from 'vue-router'
+
 defineProps({
   activeSection: {
     type: String,
@@ -6,25 +8,27 @@ defineProps({
   },
 })
 
-defineEmits(['select'])
+const sideMenu = [
+  { key: 'todos', label: 'TODOs', path: '/dashboard/todos' },
+  { key: 'notes', label: 'Notes', path: '/dashboard/notes' },
+]
 </script>
 
 <template>
   <aside class="sidebar" aria-label="Workspace navigation">
     <p class="sidebar-heading">Workspace</p>
     <nav class="section-list" aria-label="Workspace sections">
-      <button
-        v-for="section in ['TODOs', 'Notes']"
-        :key="section"
+      <RouterLink
+        v-for="section in sideMenu"
+        :key="section.key"
         class="section-link"
-        :class="{ active: activeSection === section }"
-        type="button"
-        :aria-current="activeSection === section ? 'page' : undefined"
-        @click="$emit('select', section)"
+        :class="{ active: activeSection === section.key }"
+        :to="section.path"
+        :aria-current="activeSection === section.key ? 'page' : undefined"
       >
-        <span class="section-icon" aria-hidden="true">{{ section === 'TODOs' ? '✓' : '≡' }}</span>
-        {{ section }}
-      </button>
+        <span class="section-icon" aria-hidden="true">{{ section.key === 'todos' ? '✓' : '≡' }}</span>
+        {{ section.label }}
+      </RouterLink>
     </nav>
   </aside>
 </template>

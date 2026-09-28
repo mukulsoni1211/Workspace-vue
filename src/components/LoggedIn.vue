@@ -1,26 +1,26 @@
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 import Sidebar from './Sidebar.vue'
 import Topbar from './Topbar.vue'
+import { getSessionName } from '../services/sessionService'
 
-defineProps({
-  name: {
+const props = defineProps({
+  section: {
     type: String,
-    default: '',
+    required: true,
   },
 })
 
-const emit = defineEmits(['logout'])
-
-const activeSection = ref('TODOs')
+const accountName = getSessionName()
+const activeSection = computed(() => props.section === 'notes' ? 'Notes' : 'TODOs')
 </script>
 
 <template>
   <main class="logged-in-page">
-    <Topbar :name="name" @logout="emit('logout')" />
+    <Topbar :name="accountName" />
 
     <div class="workspace-layout">
-      <Sidebar :active-section="activeSection" @select="activeSection = $event" />
+      <Sidebar :active-section="section" />
 
       <section class="content" :aria-labelledby="'section-title'">
         <p class="eyebrow">Personal workspace</p>
