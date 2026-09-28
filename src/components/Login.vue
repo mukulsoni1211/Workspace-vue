@@ -1,43 +1,26 @@
 <script setup>
 import { ref } from 'vue'
+import { login } from '../services/authService'
 
-const emit = defineEmits(['login'])
+const emit = defineEmits(['login', 'signup'])
 const email = ref('')
 const password = ref('')
 const passwordVisible = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-const loginAuthToken = import.meta.env.VITE_LOGIN_AUTH_TOKEN
-
 async function submitLogin() {
   errorMessage.value = ''
   isSubmitting.value = true
 
-  const formData = new FormData()
-  formData.append('email', email.value)
-  formData.append('password', password.value)
-
   try {
-    const headers = loginAuthToken ? { Authorization: `Bearer ${loginAuthToken}` } : {}
-    const response = await fetch(`${apiBaseUrl}/login`, {
-      method: 'POST',
-      headers,
-      body: formData,
-    })
-    const responseBody = await response.json().catch(() => ({}))
-    const token = responseBody.token || responseBody.access_token || responseBody.data?.token || responseBody.data?.access_token
-
-    if (!response.ok || !token) {
-      throw new Error(responseBody.message || responseBody.error || 'Unable to sign in with those details.')
-    }
-
-    emit('login', token)
+    const data = await login(email.value, password.value)
+    emit('login', data)
   } catch (error) {
-    errorMessage.value = error instanceof TypeError
-      ? 'Unable to reach the login service. Please try again.'
-      : error.message
+    errorMessage.value = error.response?.data?.message
+      || error.response?.data?.error
+      || error.message
+      || 'Unable to sign in. Please try again.'
   } finally {
     isSubmitting.value = false
   }
@@ -104,7 +87,7 @@ async function submitLogin() {
         </button>
       </form>
 
-      <p class="signup-prompt">New to Personal? <a href="#create-account">Create an account</a></p>
+      <p class="signup-prompt">New to Personal? <a href="#create-account" @click.prevent="emit('signup')">Create an account</a></p>
     </section>
   </main>
 </template>
