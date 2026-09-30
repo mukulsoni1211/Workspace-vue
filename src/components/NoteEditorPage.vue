@@ -7,29 +7,34 @@ const route = useRoute()
 const router = useRouter()
 const title = ref('')
 const content = ref('')
+const note = ref(null)
 const isLoading = ref(false)
 const isSaving = ref(false)
 const errorMessage = ref('')
 const isEditing = computed(() => Boolean(route.params.id))
 
 async function loadNote() {
+  console.log('loadNote called with isEditing:', isEditing.value, 'route.params.id:', route.params.id)
   if (!isEditing.value) {
     title.value = ''
     content.value = ''
     errorMessage.value = ''
     return
   }
-
+  console.log('Loading note with ID:', route.params.id)
   isLoading.value = true
   errorMessage.value = ''
   try {
     note.value = await getNote(route.params.id)
+    console.log('Fetched note:', note.value)
     if (!note.value) {
       errorMessage.value = 'This note could not be found.'
       return
     }
-    title.value = note.title || ''
-    content.value = note.content || ''
+    title.value = note.value.title || ''
+    content.value = note.value.content || ''
+
+    console.log('title.value:', title.value, 'content.value:', content.value)
   } catch (error) {
     errorMessage.value = error.response?.data?.message
       || error.response?.data?.error
